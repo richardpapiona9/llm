@@ -57,7 +57,6 @@ class UltralyticsChat {
     this.init();
   }
 
-  // -------------------- Utilities --------------------
   qs = (sel, root = document) => root.querySelector(sel);
   qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -91,7 +90,6 @@ class UltralyticsChat {
     }
   }
 
-  // -------------------- Init --------------------
   init() {
     this.createStyles();
     this.createUI();
@@ -118,7 +116,6 @@ class UltralyticsChat {
     this.refs = {};
   }
 
-  // -------------------- Theme --------------------
   syncThemeWithSite() {
     const root = document.documentElement;
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -136,7 +133,6 @@ class UltralyticsChat {
     }
   }
 
-  // -------------------- Styles --------------------
   createStyles() {
     const { primary, dark, yellow, text } = this.config.theme;
     this.styleElement = this.el(
@@ -154,7 +150,7 @@ class UltralyticsChat {
       .ultralytics-chat-pill{position:fixed;right:16px;bottom:36px;padding:14px 22px;border-radius:9999px;background:var(--ult-yellow);
         color:var(--ult-dark);border:0;cursor:pointer;font-size:18px;font-weight:500;box-shadow:0 20px 38px rgba(2,6,23,.22),0 8px 18px rgba(2,6,23,.14);
         z-index:10000;transition:transform .18s,box-shadow .18s,opacity .14s;display:inline-flex;align-items:center;gap:10px;transform:translateZ(0);
-        -webkit-user-select:none;user-select:none}
+        -webkit-user-select:none;user-select:none;touch-action:manipulation}
       .ultralytics-chat-pill:hover{transform:scale(1.1)} .ultralytics-chat-pill.hidden{transform:scale(.95);opacity:0;pointer-events:none}
       .ultralytics-chat-pill img{width:30px;height:30px;border-radius:3px}
       html[data-theme=dark] .ultralytics-chat-pill{background:#40434f;color:#fff;box-shadow:0 20px 38px rgba(0,0,0,.5),0 8px 18px rgba(0,0,0,.32)}
@@ -170,7 +166,7 @@ class UltralyticsChat {
       .ult-chat-title img{max-height:32px;max-width:180px}
       .ult-subtle{font-size:12px;color:#6b7280} html[data-theme=dark] .ult-subtle{color:#a1a1aa}
       .ult-header-actions{display:flex;gap:6px;align-items:center}
-      .ult-icon-btn{background:transparent;border:0;width:44px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280;transition:.15s}
+      .ult-icon-btn{background:transparent;border:0;width:44px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280;transition:.15s;touch-action:manipulation}
       .ult-icon-btn:hover{transform:translateY(-1px);color:var(--ult-text);background:#f7f7f9}
       html[data-theme=dark] .ult-icon-btn{color:#a1a1aa}
       html[data-theme=dark] .ult-icon-btn:hover{color:#fafafa;background:#17181d}
@@ -178,7 +174,7 @@ class UltralyticsChat {
       .ult-welcome{padding:18px}.ult-welcome h1{font-size:16px;margin:0 0 6px}.ult-welcome p{margin:0;color:#4b5563}
       html[data-theme=dark] .ult-welcome p{color:#a1a1aa}
       .ult-examples{padding:12px 18px 6px;display:flex;flex-wrap:wrap;gap:10px}
-      .ult-example{padding:10px 12px;background:#f7f7f9;border:0;border-radius:999px;cursor:pointer;font-size:12px;color:#0b0b0f;transition:.12s}
+      .ult-example{padding:10px 12px;background:#f7f7f9;border:0;border-radius:999px;cursor:pointer;font-size:12px;color:#0b0b0f;transition:.12s;touch-action:manipulation}
       .ult-example:hover{transform:translateY(-1px);filter:brightness(.98)}
       html[data-theme=dark] .ult-example{background:#131318;color:#fafafa}
 
@@ -219,10 +215,10 @@ class UltralyticsChat {
 
       .ult-chat-input-container{padding:12px 12px 16px;display:flex;gap:8px;align-items:flex-end}
       .ult-actions{display:flex;gap:6px;align-items:center}
-      .ult-action-btn,.ult-chat-send{background:#f1f2f6;border:0;border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;flex-shrink:0}
+      .ult-action-btn,.ult-chat-send{background:#f1f2f6;border:0;border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;flex-shrink:0;touch-action:manipulation}
       .ult-action-btn:hover,.ult-chat-send:hover{transform:translateY(-1px);filter:brightness(.98)}
       html[data-theme=dark] .ult-action-btn,html[data-theme=dark] .ult-chat-send{background:#17181d}
-      .ult-chat-input{flex:1;padding:10px 12px;border:0;border-radius:12px;font-size:16px;resize:none;max-height:140px;background:#f7f7f9;color:#0b0b0f;outline:0}
+      .ult-chat-input{flex:1;padding:10px 12px;border:0;border-radius:12px;font-size:14px;resize:none;max-height:140px;background:#f7f7f9;color:#0b0b0f;outline:0}
       .ult-chat-input::placeholder{color:#9ca3af} html[data-theme=dark] .ult-chat-input{background:#131318;color:#fafafa}
 
       .ult-chat-modal[data-mode="search"] .ult-chat-header{order:0}
@@ -233,13 +229,12 @@ class UltralyticsChat {
       .ult-chat-modal[data-mode="search"] .ult-chat-messages{order:3}
 
       .ult-icon-swap{display:flex;align-items:center;justify-content:center}
-      @media (max-width:768px){.ult-backdrop{pointer-events:none}.ult-chat-modal{left:0;top:0;transform:none;width:100vw;height:100vh;border-radius:0;pointer-events:auto;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}.ult-chat-modal.open{transform:none}.ult-actions{display:none}.ult-chat-header{padding:12px 18px}.ult-chat-input-container{padding-bottom:max(16px,env(safe-area-inset-bottom))}}
+      @media (max-width:768px){.ult-backdrop{pointer-events:none}.ult-chat-modal{left:0;top:0;transform:none;width:100vw;height:100vh;border-radius:0}.ult-chat-modal.open{transform:none}.ult-actions{display:none}}
     `,
     );
     document.head.appendChild(this.styleElement);
   }
 
-  // -------------------- Icons --------------------
   icon(name) {
     const base =
       'width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
@@ -263,7 +258,6 @@ class UltralyticsChat {
     return `<svg ${base} aria-hidden="true">${paths[name] || ""}</svg>`;
   }
 
-  // -------------------- UI --------------------
   createUI() {
     const { logomark, pillText, logo, name, tagline } = this.config.branding;
     const { title, message, examples } = this.config.welcome;
@@ -297,15 +291,11 @@ class UltralyticsChat {
           <button class="ult-icon-btn ult-chat-close" title="Close" aria-label="Close">${this.icon("close")}</button>
         </div>
       </div>
-
       <div id="ult-welcome" class="ult-welcome" style="display:none">
         <h1>${this.escapeHtml(title)}</h1><p>${message}</p>
       </div>
-
       <div id="ult-examples" class="ult-examples" style="display:none"></div>
-
       <div class="ult-chat-messages" id="ult-messages" aria-live="polite"></div>
-
       <div class="ult-chat-input-container">
         <div class="ult-actions">
           <button class="ult-action-btn ult-act-copy" title="Copy last response" aria-label="Copy last response">${this.icon("copy")}</button>
@@ -347,10 +337,8 @@ class UltralyticsChat {
     );
   }
 
-  // -------------------- Events --------------------
   attachEvents() {
     const m = this.refs.modal;
-
     this.on(this.refs.pill, "click", () => this.toggle(true, "chat"));
     this.on(this.refs.backdrop, "click", () => this.toggle());
     this.on(this.qs(".ult-chat-close", m), "click", () => this.toggle());
@@ -359,12 +347,10 @@ class UltralyticsChat {
     this.on(this.qs(".ult-chat-download", m), "click", () =>
       this.downloadThread(),
     );
-
     this.on(this.refs.messages, "scroll", () => {
       const d = this.refs.messages;
       this.autoScroll = d.scrollHeight - d.scrollTop - d.clientHeight < 100;
     });
-
     this.on(this.refs.input, "input", (e) => {
       const t = e.target;
       t.style.height = "auto";
@@ -375,12 +361,10 @@ class UltralyticsChat {
         50,
       );
     });
-
     this.on(this.refs.send, "click", () => {
       if (this.isStreaming) this.stopStreaming();
       else this.sendMessage(this.refs.input.value.trim());
     });
-
     this.on(this.refs.input, "keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -391,13 +375,11 @@ class UltralyticsChat {
         this.toggle(false);
       }
     });
-
     this.on(document, "keydown", (e) => {
       if (this.isOpen && e.key === "Escape") this.toggle(false);
       if (!this.isOpen && e.metaKey && e.key.toLowerCase() === "k")
         this.toggle(true);
     });
-
     this.on(this.qs(".ult-act-copy", m), "click", () =>
       this.copyLastAssistant(),
     );
@@ -409,17 +391,14 @@ class UltralyticsChat {
     this.on(this.qs(".ult-act-retry", m), "click", () => this.retryLast());
   }
 
-  // -------------------- State + Mode --------------------
   toggle(forceOpen = null, mode = null) {
     const next = forceOpen === null ? !this.isOpen : !!forceOpen;
     this.isOpen = next;
     if (mode) this.mode = mode;
-
     this.refs.modal?.classList.toggle("open", next);
     this.refs.backdrop?.classList.toggle("open", next);
     this.refs.pill?.classList.toggle("hidden", next);
     document.documentElement.style.overflow = next ? "hidden" : "";
-
     if (next) {
       this.updateUIForMode();
       if (!this.messages.length) this.showWelcome(true);
@@ -434,7 +413,6 @@ class UltralyticsChat {
     if (!this.refs.modal) return;
     const tagline = this.qs(".ult-subtle", this.refs.modal);
     this.refs.modal.dataset.mode = this.mode;
-
     if (this.mode === "search") {
       if (this.refs.input) this.refs.input.placeholder = "Search for...";
       if (tagline)
@@ -479,7 +457,6 @@ class UltralyticsChat {
       this.showWelcome(true);
       return;
     }
-
     this.showWelcome(false);
     const prevAutoScroll = this.autoScroll;
     this.autoScroll = false;
@@ -488,7 +465,6 @@ class UltralyticsChat {
     this.refs.messages.scrollTop = this.refs.messages.scrollHeight;
   }
 
-  // -------------------- Composer --------------------
   swapSendIcon(name) {
     const holder = this.qs(".ult-icon-swap", this.refs.send);
     if (!holder || holder.dataset.icon === name) return;
@@ -512,7 +488,6 @@ class UltralyticsChat {
     this.swapSendIcon(hasText ? "arrowUp" : "square");
   }
 
-  // -------------------- Helpers --------------------
   scrollToBottom() {
     if (!this.autoScroll || !this.refs.messages) return;
     requestAnimationFrame(() => {
@@ -586,7 +561,6 @@ class UltralyticsChat {
     this.refs.input?.focus();
   }
 
-  // -------------------- Search --------------------
   createThinking(label = "Thinking") {
     const thinking = this.el(
       "div",
@@ -607,7 +581,6 @@ class UltralyticsChat {
     this.refs.messages.innerHTML = "";
     const { el: thinking, clear } = this.createThinking("Searching");
     this.refs.messages.appendChild(thinking);
-
     try {
       const url = this.apiUrl.replace(/\/chat$/, "/search");
       const res = await fetch(url, {
@@ -617,16 +590,13 @@ class UltralyticsChat {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-
       clear();
       thinking.remove();
-
       if (!data.results?.length) {
         this.refs.messages.innerHTML =
           '<div class="ult-message">No results found. Try different keywords.</div>';
         return;
       }
-
       this.refs.messages.innerHTML = data.results
         .map((r) => {
           const snippet =
@@ -661,14 +631,11 @@ class UltralyticsChat {
     }
   }
 
-  // -------------------- Chat --------------------
   async sendMessage(text) {
     if (!text || this.isStreaming || !this.refs.input || !this.refs.messages)
       return;
-
     this.showWelcome(false);
     this.autoScroll = true;
-
     if (this.mode === "search") {
       this.refs.input.value = text;
       this.refs.input.style.height = "auto";
@@ -678,21 +645,17 @@ class UltralyticsChat {
       this.refs.input.focus();
       return;
     }
-
     this.messages.push({ role: "user", content: text });
     this.addMessageToUI("user", text);
     this.refs.input.value = "";
     this.refs.input.style.height = "auto";
     this.isStreaming = true;
     this.updateComposerState();
-
     const group = this.createMessageGroup("assistant");
     const { el: thinking, clear } = this.createThinking();
     group.appendChild(thinking);
     this.scrollToBottom();
-
     this.abortController = new AbortController();
-
     try {
       const res = await fetch(this.apiUrl, {
         method: "POST",
@@ -704,27 +667,21 @@ class UltralyticsChat {
         signal: this.abortController.signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const sid = res.headers.get("X-Session-ID");
       if (sid && !this.sessionId) {
         this.sessionId = sid;
         this.saveSessionId(sid);
       }
-
       thinking.remove();
       clear();
-
       const div = this.el("div", "ult-message assistant");
       group.appendChild(div);
-
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response stream");
-
       const decoder = new TextDecoder();
       let content = "";
       let renderTimer = null;
       const renderDelay = 30;
-
       const scheduleRender = () => {
         if (renderTimer) return;
         renderTimer = setTimeout(() => {
@@ -733,7 +690,6 @@ class UltralyticsChat {
           renderTimer = null;
         }, renderDelay);
       };
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -756,7 +712,6 @@ class UltralyticsChat {
           }
         }
       }
-
       if (renderTimer) {
         clearTimeout(renderTimer);
         renderTimer = null;
@@ -784,7 +739,6 @@ class UltralyticsChat {
     }
   }
 
-  // -------------------- Rendering --------------------
   createMessageGroup(role) {
     if (!this.refs.messages) return null;
     const { name, logomark } = this.config.branding;
@@ -836,7 +790,6 @@ class UltralyticsChat {
       listOpen = false,
       inQuote = false,
       paraOpen = false;
-
     const closePara = () => {
       if (paraOpen) {
         html += "</p>";
@@ -862,7 +815,6 @@ class UltralyticsChat {
         inQuote = false;
       }
     };
-
     for (let raw of lines) {
       const fence = raw.match(/^```(\w+)?\s*$/);
       if (fence) {
@@ -884,7 +836,6 @@ class UltralyticsChat {
         html += esc(raw) + "\n";
         continue;
       }
-
       const q = /^>\s?(.*)$/.exec(raw);
       if (q) {
         if (!inQuote) {
@@ -895,7 +846,6 @@ class UltralyticsChat {
         }
         raw = q[1];
       } else closeQuote();
-
       let m;
       if ((m = raw.match(/^\s*([-*+])\s+(.+)$/))) {
         if (!listOpen || listType !== "ul") {
@@ -946,7 +896,6 @@ class UltralyticsChat {
         html += `<h1>${this.renderInline(m[1])}</h1>`;
         continue;
       }
-
       openPara();
       html += this.renderInline(raw);
     }
@@ -958,35 +907,27 @@ class UltralyticsChat {
 
   renderInline(text) {
     if (!text) return "";
-
     text = this.escapeHtml(text);
-
     const codeBlocks = [];
     text = text.replace(/`([^`]+)`/g, (match, code) => {
       codeBlocks.push(code);
       return `@@ULTCODE${codeBlocks.length - 1}@@`;
     });
-
     text = text.replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
     );
-
     text = text.replace(
       /(?<!href=")(?<!src=")\b(https?:\/\/[^\s<>.,;:'")\]!?]+)(?=[<\s.,;:'")\]!?]|$)/g,
       '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
     );
-
     text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     text = text.replace(/__(.+?)__/g, "<strong>$1</strong>");
-
     text = text.replace(/(?<!\*)\*(?!\*)(.+?)\*(?!\*)/g, "<em>$1</em>");
     text = text.replace(/(?<!_)_(?!_)(.+?)_(?!_)/g, "<em>$1</em>");
-
     text = text.replace(/@@ULTCODE(\d+)@@/g, (match, idx) => {
       return `<code>${codeBlocks[idx]}</code>`;
     });
-
     return text.replace(/ {2}\n/g, "<br>");
   }
 }
