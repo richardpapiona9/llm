@@ -191,6 +191,8 @@ class UltralyticsChat {
       .ult-message{font-size:14px;line-height:1.6;color:var(--ult-text);padding:0 2px;word-break:break-word;text-align:left}
       html[data-theme=dark] .ult-message{color:#f5f5f5}
       .ult-message a{color:var(--ult-primary);text-underline-offset:2px}.ult-message a:hover{text-decoration:underline}
+      .ult-message strong{font-weight:700;color:var(--ult-text)}
+      html[data-theme=dark] .ult-message strong{color:#fafafa}
       .ult-message pre{background:#0f172a;color:#e5e7eb;padding:10px 12px;border-radius:10px;overflow:auto;margin:6px 0;border:0}
       .ult-message code{background:#f4f4f5;padding:2px 6px;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;border:0}
       .ult-message pre code{background:transparent;padding:0;border:0;display:block;color:inherit;font-size:13px}
@@ -956,19 +958,35 @@ class UltralyticsChat {
 
   renderInline(text) {
     if (!text) return "";
+
     text = this.escapeHtml(text);
+
+    const codeBlocks = [];
+    text = text.replace(/`([^`]+)`/g, (match, code) => {
+      codeBlocks.push(code);
+      return `@@ULTCODE${codeBlocks.length - 1}@@`;
+    });
+
     text = text.replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
     );
+
     text = text.replace(
-      /(?<!["'(])\bhttps?:\/\/[^\s<)]+[^\s<).,;:'")\]]/g,
-      (u) =>
-        `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`,
+      /(?<!href=")(?<!src=")\b(https?:\/\/[^\s<>.,;:'")\]!?]+)(?=[<\s.,;:'")\]!?]|$)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
     );
-    text = text.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
-    text = text.replace(/(\*|_)([^*_]+)\1/g, "<em>$2</em>");
-    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    text = text.replace(/__(.+?)__/g, "<strong>$1</strong>");
+
+    text = text.replace(/(?<!\*)\*(?!\*)(.+?)\*(?!\*)/g, "<em>$1</em>");
+    text = text.replace(/(?<!_)_(?!_)(.+?)_(?!_)/g, "<em>$1</em>");
+
+    text = text.replace(/@@ULTCODE(\d+)@@/g, (match, idx) => {
+      return `<code>${codeBlocks[idx]}</code>`;
+    });
+
     return text.replace(/ {2}\n/g, "<br>");
   }
 }
