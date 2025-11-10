@@ -3,7 +3,7 @@
 class UltralyticsChat {
   constructor(config = {}) {
     this.config = {
-      apiUrl: config.apiUrl || "/api/chat",
+      apiUrl: config.apiUrl || "https://chat-885297101091.europe-west1.run.app",
       maxMessageLength: config.maxMessageLength || 10000,
       branding: {
         name: config.branding?.name || "AI",
@@ -51,6 +51,7 @@ class UltralyticsChat {
     this.sessionId = this.loadSessionId();
     this.autoScroll = true;
     this.mode = "chat";
+    this.scrollY = 0;
     this.refs = {};
     this.listeners = new Map();
     this.inputDebounceTimer = null;
@@ -229,7 +230,42 @@ class UltralyticsChat {
       .ult-chat-modal[data-mode="search"] .ult-chat-messages{order:3}
 
       .ult-icon-swap{display:flex;align-items:center;justify-content:center}
-      @media (max-width:768px){.ult-backdrop{pointer-events:none}.ult-chat-modal{left:0;top:0;transform:none;width:100vw;height:100vh;border-radius:0}.ult-chat-modal.open{transform:none}.ult-actions{display:none}}
+      @media (max-width:768px){
+        .ult-backdrop{pointer-events:none}
+        .ult-chat-modal{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;border-radius:0;transform:none!important}
+        .ult-chat-modal.open{transform:none!important}
+        .ult-actions{display:none}
+        .ult-subtle{display:none!important}
+        .ult-chat-header{padding:10px 12px;min-height:52px}
+        .ult-chat-title{gap:8px;flex:1;min-width:0}
+        .ult-chat-title img{max-height:26px;max-width:140px}
+        .ult-header-actions{gap:4px;flex-shrink:0}
+        .ult-icon-btn{width:36px;height:36px;border-radius:8px}
+        .ult-icon-btn svg{width:16px;height:16px}
+        .ult-chat-messages{padding:0 12px 10px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+        .ult-welcome{padding:10px 12px}
+        .ult-welcome h1{font-size:15px;margin:0 0 4px}
+        .ult-welcome p{font-size:13px}
+        .ult-examples{padding:6px 12px 4px;gap:8px}
+        .ult-example{padding:8px 10px;font-size:11px}
+        .ult-chat-input-container{padding:8px 10px 10px}
+        .ult-chat-input{padding:8px 10px;font-size:13px;max-height:100px}
+        .ult-chat-send{width:36px;height:36px}
+        .ult-chat-send svg{width:16px;height:16px}
+        .ult-message-group{gap:3px}
+        .ult-message-label{font-size:10px;gap:6px;padding:0}
+        .ult-message-label img{max-height:20px;max-width:20px}
+        .ult-message-label svg{width:20px;height:20px}
+        .ult-message{font-size:13px;line-height:1.5;padding:0}
+        .ult-message code{font-size:11px;padding:2px 4px}
+        .ult-message pre{padding:8px 10px;font-size:12px}
+        .ult-search-result{padding:10px;margin-bottom:8px}
+        .ult-search-result-title{font-size:13px;margin-bottom:4px}
+        .ult-search-result-snippet{font-size:12px}
+        .ult-search-result-meta{font-size:10px}
+        .ultralytics-chat-pill{right:12px;bottom:24px;padding:12px 18px;font-size:16px}
+        .ultralytics-chat-pill img{width:26px;height:26px}
+      }
     `,
     );
     document.head.appendChild(this.styleElement);
@@ -398,7 +434,19 @@ class UltralyticsChat {
     this.refs.modal?.classList.toggle("open", next);
     this.refs.backdrop?.classList.toggle("open", next);
     this.refs.pill?.classList.toggle("hidden", next);
-    document.documentElement.style.overflow = next ? "hidden" : "";
+    if (next) {
+      this.scrollY = window.scrollY;
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${this.scrollY}px`;
+    } else {
+      document.documentElement.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, this.scrollY);
+    }
     if (next) {
       this.updateUIForMode();
       if (!this.messages.length) this.showWelcome(true);
