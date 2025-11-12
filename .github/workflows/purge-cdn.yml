@@ -20,7 +20,6 @@ jobs:
     steps:
       - name: Purge jsdelivr CDN
         run: |
-          set -e
           FILES=("js/chat.js" "js/chat.min.js")
           VERSIONS=("main" "master" "latest")
           
@@ -32,28 +31,34 @@ jobs:
             for version in "${VERSIONS[@]}"; do
               URL="https://purge.jsdelivr.net/gh/${{ github.repository }}@$version/$file"
               echo "Purging: $file@$version"
+              echo "URL: $URL"
               
-              # Use curl with error handling
-              RESPONSE=$(curl -fsSw "\n%{http_code}" "$URL" 2>&1 || echo -e "\n000")
-              HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-              BODY=$(echo "$RESPONSE" | head -n-1)
+              # Capture both stdout and stderr, plus HTTP code
+              HTTP_RESPONSE=$(mktemp)
+              HTTP_CODE=$(curl -sS -w "%{http_code}" -o "$HTTP_RESPONSE" "$URL" 2>&1 || echo "000")
+              BODY=$(cat "$HTTP_RESPONSE" 2>/dev/null || echo "")
+              rm -f "$HTTP_RESPONSE"
               
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "✓ Success: $file@$version (HTTP $HTTP_CODE)"
-                ((SUCCESS++))
-              else
-                echo "✗ Failed: $file@$version (HTTP $HTTP_CODE)"
-                [ -n "$BODY" ] && echo "Response: $BODY"
-                ((FAILED++))
+              echo "HTTP Code: $HTTP_CODE"
+              if [ -n "$BODY" ]; then
+                echo "Response: $BODY"
               fi
+              
+              if [[ "$HTTP_CODE" =~ ^2[0-9]{2}$ ]]; then
+                echo "✓ Success: $file@$version"
+                SUCCESS=$((SUCCESS + 1))
+              else
+                echo "✗ Failed: $file@$version"
+                FAILED=$((FAILED + 1))
+              fi
+              echo ""
               sleep 1
             done
           done
           
-          echo ""
           echo "CDN purge summary: $SUCCESS successful, $FAILED failed"
           
-          # Don't fail the workflow if some purges fail (CDN might not have cached yet)
+          # Exit with error if all purges failed
           if [ $SUCCESS -eq 0 ]; then
             echo "Error: All CDN purges failed"
             exit 1
