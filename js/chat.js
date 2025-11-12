@@ -14,7 +14,7 @@ class UltralyticsChat {
           "Ask anything about Ultralytics, YOLO, and more",
         logo:
           config.branding?.logo ||
-          "https://cdn.prod.website-files.com/680a070c3b99253410dd3dcf/680a070c3b99253410dd3e13_logo.svg",
+          "https://cdn.prod.website-files.com/680a070c3b99253410dd3dcf/68e4eb1e9893320b26cc02c3_Ultralytics%20Logo.png.svg",
         logomark:
           config.branding?.logomark ||
           "https://storage.googleapis.com/organization-image-assets/ultralytics-botAvatarSrcUrl-1729379860806.svg",
@@ -27,10 +27,10 @@ class UltralyticsChat {
         text: config.theme?.text || "#0b0b0f",
       },
       welcome: {
-        title: config.welcome?.title || "Hi!",
+        title: config.welcome?.title || "Hello 👋",
         message:
           config.welcome?.message ||
-          "I'm an AI assistant trained on documentation, help articles, and other content.<br>Ask me anything about Ultralytics.",
+          "I'm an AI assistant trained on Ultralytics documentation - ask me anything!",
         examples: config.welcome?.examples || [
           "What's new in YOLO11?",
           "How do I get started with YOLO?",
@@ -99,12 +99,13 @@ class UltralyticsChat {
   saveSessionId(id) {
     try {
       localStorage.setItem("ult-chat-session", id);
-    } catch (e) {
-      console.warn("Failed to save session ID:", e);
+    } catch {
+      console.warn("Failed to save session ID");
     }
   }
 
   init() {
+    this.ensureViewport();
     this.createStyles();
     this.createUI();
     this.attachEvents();
@@ -114,33 +115,35 @@ class UltralyticsChat {
     this.watchForRemoval();
   }
 
+  ensureViewport() {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement("meta");
+      viewport.name = "viewport";
+      document.head.appendChild(viewport);
+    }
+    if (!viewport.content.includes("maximum-scale")) {
+      viewport.content =
+        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no";
+    }
+  }
+
   watchForRemoval() {
+    const elements = [
+      { element: () => this.styleElement, parent: document.head },
+      { element: () => this.refs.pill, parent: document.body },
+      { element: () => this.refs.modal, parent: document.body },
+      { element: () => this.refs.backdrop, parent: document.body },
+    ];
     const observer = new MutationObserver(() => {
-      if (this.styleElement?.parentNode !== document.head) {
-        document.head.appendChild(this.styleElement);
-      }
-      if (this.refs.pill?.parentNode !== document.body) {
-        document.body.appendChild(this.refs.pill);
-      }
-      if (this.refs.modal?.parentNode !== document.body) {
-        document.body.appendChild(this.refs.modal);
-      }
-      if (this.refs.backdrop?.parentNode !== document.body) {
-        document.body.appendChild(this.refs.backdrop);
-      }
+      elements.forEach(({ element, parent }) => {
+        const el = element();
+        if (el?.parentNode !== parent) parent.appendChild(el);
+      });
     });
     observer.observe(document.head, { childList: true });
     observer.observe(document.body, { childList: true });
     this.domObserver = observer;
-  }
-
-  ensureUI() {
-    if (this.refs.pill && !document.body.contains(this.refs.pill))
-      document.body.appendChild(this.refs.pill);
-    if (this.refs.modal && !document.body.contains(this.refs.modal))
-      document.body.appendChild(this.refs.modal);
-    if (this.refs.backdrop && !document.body.contains(this.refs.backdrop))
-      document.body.appendChild(this.refs.backdrop);
   }
 
   destroy() {
@@ -167,12 +170,7 @@ class UltralyticsChat {
       }
     };
     applyTheme();
-    const handler = () => applyTheme();
-    if (mql.addEventListener) {
-      mql.addEventListener("change", handler);
-    } else if (mql.addListener) {
-      mql.addListener(handler);
-    }
+    mql.addEventListener("change", applyTheme);
   }
 
   createStyles() {
@@ -257,9 +255,10 @@ class UltralyticsChat {
 
       .ult-chat-input-container{padding:12px 12px 16px;display:flex;gap:8px;align-items:flex-end}
       .ult-actions{display:flex;gap:6px;align-items:center}
-      .ult-action-btn,.ult-chat-send{background:#f1f2f6;border:0;border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;flex-shrink:0;touch-action:manipulation}
-      .ult-action-btn:hover,.ult-chat-send:hover{transform:translateY(-1px);filter:brightness(.98)}
-      html[data-theme=dark] .ult-action-btn,html[data-theme=dark] .ult-chat-send{background:#17181d}
+      .ult-action-btn,.ult-chat-send{background:#f1f2f6;border:0;border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;flex-shrink:0;touch-action:manipulation;color:#6b7280}
+      .ult-action-btn:hover,.ult-chat-send:hover{transform:translateY(-1px);filter:brightness(.98);color:var(--ult-text)}
+      html[data-theme=dark] .ult-action-btn,html[data-theme=dark] .ult-chat-send{background:#17181d;color:#a1a1aa}
+      html[data-theme=dark] .ult-action-btn:hover,html[data-theme=dark] .ult-chat-send:hover{color:#fafafa}
       .ult-chat-input{flex:1;padding:10px 12px;border:0;border-radius:12px;font-size:14px;resize:none;max-height:140px;background:#f7f7f9;color:#0b0b0f;outline:0}
       .ult-chat-input::placeholder{color:#9ca3af} html[data-theme=dark] .ult-chat-input{background:#131318;color:#fafafa}
 
@@ -273,39 +272,45 @@ class UltralyticsChat {
       .ult-icon-swap{display:flex;align-items:center;justify-content:center}
       @media (max-width:768px){
         .ult-backdrop{pointer-events:none}
-        .ult-chat-modal{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;border-radius:0;transform:none!important}
-        .ult-chat-modal.open{transform:none!important}
+        .ult-chat-modal{position:fixed;left:0;top:0;width:100vw;height:100svh;max-width:100vw;max-height:100svh;border-radius:0;margin:0;padding:0;transform:none!important}
+        .ult-chat-modal.open{transform:none!important;opacity:1}
+        .ult-chat-modal.open{display:flex;flex-direction:column;overflow:hidden}
+        body.ult-modal-open{position:fixed!important;width:100%!important;overflow:hidden!important;-webkit-overflow-scrolling:touch}
         .ult-actions{display:none}
         .ult-subtle{display:none!important}
-        .ult-chat-header{padding:10px 12px;min-height:52px}
-        .ult-chat-title{gap:8px;flex:1;min-width:0}
-        .ult-chat-title img{max-height:26px;max-width:140px}
-        .ult-header-actions{gap:4px;flex-shrink:0}
-        .ult-icon-btn{width:36px;height:36px;border-radius:8px}
-        .ult-icon-btn svg{width:16px;height:16px}
-        .ult-chat-messages{padding:0 12px 10px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-        .ult-welcome{padding:10px 12px}
+        .ult-chat-header{padding:8px 12px;min-height:48px;flex-shrink:0;border-bottom:1px solid #eceff5}
+        html[data-theme=dark] .ult-chat-header{border-bottom-color:#1c1c22}
+        .ult-chat-title{gap:6px;flex:1;min-width:0}
+        .ult-chat-title img{max-height:24px;max-width:120px}
+        .ult-header-actions{gap:2px;flex-shrink:0}
+        .ult-icon-btn{width:38px;height:38px;border-radius:8px}
+        .ult-icon-btn svg{width:17px;height:17px}
+        .ult-chat-messages{flex:1 1 0;min-height:0;padding:0 0 8px 0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+        .ult-chat-modal.welcome-mode .ult-chat-messages{display:none}
+        .ult-welcome{padding:10px 14px 0}
         .ult-welcome h1{font-size:15px;margin:0 0 4px}
-        .ult-welcome p{font-size:13px}
-        .ult-examples{padding:6px 12px 4px;gap:8px}
-        .ult-example{padding:8px 10px;font-size:11px}
-        .ult-chat-input-container{padding:8px 10px 10px}
-        .ult-chat-input{padding:8px 10px;font-size:13px;max-height:100px}
-        .ult-chat-send{width:36px;height:36px}
-        .ult-chat-send svg{width:16px;height:16px}
-        .ult-message-group{gap:3px}
-        .ult-message-label{font-size:10px;gap:6px;padding:0}
+        .ult-welcome p{font-size:13px;margin:0;line-height:1.35}
+        .ult-examples{padding:6px 14px;gap:6px;flex-wrap:wrap}
+        .ult-example{padding:8px 11px;font-size:12px}
+        .ult-chat-input-container{padding:8px 14px 10px;flex:0 0 auto;gap:8px;border-top:1px solid #eceff5;background:#fff}
+        .ult-chat-modal.welcome-mode .ult-chat-input-container{margin-top:auto}
+        html[data-theme=dark] .ult-chat-input-container{border-top-color:#1c1c22;background:#0a0a0b}
+        .ult-chat-input{padding:9px 11px;font-size:16px;max-height:100px;border-radius:10px}
+        .ult-chat-send{width:38px;height:38px;border-radius:10px;flex-shrink:0}
+        .ult-chat-send svg{width:17px;height:17px}
+        .ult-message-group{gap:3px;padding:0 14px;margin-bottom:8px}
+        .ult-message-label{font-size:11px;gap:5px;padding:0;margin-bottom:2px}
         .ult-message-label img{max-height:20px;max-width:20px}
         .ult-message-label svg{width:20px;height:20px}
-        .ult-message{font-size:13px;line-height:1.5;padding:0}
-        .ult-message code{font-size:11px;padding:2px 4px}
-        .ult-message pre{padding:8px 10px;font-size:12px}
-        .ult-search-result{padding:10px;margin-bottom:8px}
-        .ult-search-result-title{font-size:13px;margin-bottom:4px}
-        .ult-search-result-snippet{font-size:12px}
-        .ult-search-result-meta{font-size:10px}
-        .ultralytics-chat-pill{right:12px;bottom:24px;padding:12px 18px;font-size:16px}
-        .ultralytics-chat-pill img{width:26px;height:26px}
+        .ult-message{font-size:14px;line-height:1.5;padding:0}
+        .ult-message code{font-size:12px;padding:2px 5px}
+        .ult-message pre{padding:8px 10px;font-size:12px;border-radius:8px;margin:4px 0}
+        .ult-search-result{padding:10px;margin-bottom:8px;border-radius:8px}
+        .ult-search-result-title{font-size:14px;margin-bottom:5px}
+        .ult-search-result-snippet{font-size:13px}
+        .ult-search-result-meta{font-size:11px}
+        .ultralytics-chat-pill{right:14px;bottom:28px;padding:12px 18px;font-size:16px}
+        .ultralytics-chat-pill img{width:28px;height:28px}
       }
     `,
     );
@@ -313,8 +318,6 @@ class UltralyticsChat {
   }
 
   icon(name) {
-    const base =
-      'width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
     const paths = {
       copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
       download:
@@ -330,9 +333,10 @@ class UltralyticsChat {
         '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98"/><path d="M15.41 6.51L8.59 10.49"/>',
       arrowUp:
         '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
-      square: '<rect x="6" y="6" width="12" height="12" rx="2" ry="2"/>',
+      square:
+        '<rect x="4.8" y="4.8" width="14.4" height="14.4" rx="2" ry="2"/>',
     };
-    return `<svg ${base} aria-hidden="true">${paths[name] || ""}</svg>`;
+    return `<svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" fill="none">${paths[name] || ""}</svg>`;
   }
 
   createUI() {
@@ -410,7 +414,7 @@ class UltralyticsChat {
       )
       .join("");
     this.qsa(".ult-example", this.refs.examples).forEach((b) =>
-      this.on(b, "click", () => this.sendMessage(b.dataset.q)),
+      this.on(b, "click", () => void this.sendMessage(b.dataset.q)),
     );
   }
 
@@ -440,12 +444,12 @@ class UltralyticsChat {
     });
     this.on(this.refs.send, "click", () => {
       if (this.isStreaming) this.stopStreaming();
-      else this.sendMessage(this.refs.input.value.trim());
+      else void this.sendMessage(this.refs.input.value.trim());
     });
     this.on(this.refs.input, "keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        this.sendMessage(this.refs.input.value.trim());
+        void this.sendMessage(this.refs.input.value.trim());
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -465,7 +469,7 @@ class UltralyticsChat {
       this.feedback("down"),
     );
     this.on(this.qs(".ult-act-share", m), "click", () => this.copyThread());
-    this.on(this.qs(".ult-act-retry", m), "click", () => this.retryLast());
+    this.on(this.qs(".ult-act-retry", m), "click", () => void this.retryLast());
   }
 
   toggle(forceOpen = null, mode = null) {
@@ -477,36 +481,29 @@ class UltralyticsChat {
     this.refs.pill?.classList.toggle("hidden", next);
     if (next) {
       this.scrollY = window.scrollY;
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
+      document.body.classList.add("ult-modal-open");
       document.body.style.top = `-${this.scrollY}px`;
-    } else {
-      document.documentElement.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      window.scrollTo(0, this.scrollY);
-    }
-    if (next) {
       this.updateUIForMode();
       if (!this.messages.length) this.showWelcome(true);
       this.refs.input?.focus();
       this.updateComposerState();
-    } else if (this.isStreaming) {
-      this.stopStreaming();
+    } else {
+      document.body.classList.remove("ult-modal-open");
+      document.body.style.top = "";
+      window.scrollTo(0, this.scrollY);
+      if (this.isStreaming) this.stopStreaming();
     }
   }
 
   updateUIForMode() {
     if (!this.refs.modal) return;
     const tagline = this.qs(".ult-subtle", this.refs.modal);
+    const actions = this.qs(".ult-actions", this.refs.modal);
     this.refs.modal.dataset.mode = this.mode;
     if (this.mode === "search") {
       if (this.refs.input) this.refs.input.placeholder = "Search for...";
       if (tagline)
         tagline.innerHTML = `<strong style="color: ${this.config.theme.primary}; font-weight: 700;">SEARCH</strong> · Find answers in our docs and guides`;
-      const actions = this.qs(".ult-actions", this.refs.modal);
       if (actions) actions.style.display = "none";
       if (this.refs.messages) this.refs.messages.innerHTML = "";
       if (this.refs.welcome)
@@ -522,7 +519,6 @@ class UltralyticsChat {
       if (this.refs.input)
         this.refs.input.placeholder = this.config.ui.placeholder;
       if (tagline) tagline.textContent = this.config.branding.tagline;
-      const actions = this.qs(".ult-actions", this.refs.modal);
       if (actions) actions.style.display = "";
       const { title, message, examples } = this.config.welcome;
       if (this.refs.welcome)
@@ -537,6 +533,7 @@ class UltralyticsChat {
       this.refs.welcome.style.display = show ? "block" : "none";
     if (this.refs.examples)
       this.refs.examples.style.display = show ? "flex" : "none";
+    if (this.refs.modal) this.refs.modal.classList.toggle("welcome-mode", show);
   }
 
   renderChatHistory() {
@@ -570,11 +567,9 @@ class UltralyticsChat {
 
   updateComposerState() {
     const hasText = !!this.refs.input?.value.trim().length;
-    if (this.isStreaming) {
-      this.swapSendIcon("square");
-      return;
-    }
-    this.swapSendIcon(hasText ? "arrowUp" : "square");
+    this.swapSendIcon(
+      this.isStreaming ? "square" : hasText ? "arrowUp" : "square",
+    );
   }
 
   scrollToBottom() {
@@ -595,16 +590,15 @@ class UltralyticsChat {
   }
 
   copyThread() {
-    if (navigator.clipboard?.writeText)
-      navigator.clipboard.writeText(this.formatThread()).catch(console.error);
+    navigator.clipboard?.writeText(this.formatThread())?.catch(console.error);
   }
 
   copyLastAssistant() {
     const last = [...this.messages]
       .reverse()
       .find((m) => m.role === "assistant");
-    if (last && navigator.clipboard?.writeText)
-      navigator.clipboard.writeText(last.content).catch(console.error);
+    if (last)
+      navigator.clipboard?.writeText(last.content)?.catch(console.error);
   }
 
   feedback(type) {
@@ -615,7 +609,7 @@ class UltralyticsChat {
     const lastUser = [...this.messages]
       .reverse()
       .find((m) => m.role === "user");
-    if (lastUser) this.sendMessage(lastUser.content);
+    if (lastUser) void this.sendMessage(lastUser.content);
   }
 
   downloadThread() {
@@ -634,8 +628,8 @@ class UltralyticsChat {
     this.sessionId = null;
     try {
       localStorage.removeItem("ult-chat-session");
-    } catch (e) {
-      console.warn("Failed to clear session:", e);
+    } catch {
+      console.warn("Failed to clear session");
     }
     if (this.refs.messages) this.refs.messages.innerHTML = "";
     this.showWelcome(true);
@@ -643,7 +637,7 @@ class UltralyticsChat {
   }
 
   stopStreaming() {
-    if (this.abortController) this.abortController.abort();
+    this.abortController?.abort();
     this.isStreaming = false;
     this.abortController = null;
     this.updateComposerState();
@@ -690,12 +684,13 @@ class UltralyticsChat {
         .map((r) => {
           const snippet =
             r.text?.length > 150 ? r.text.slice(0, 150) + "..." : r.text || "";
-          let host = "";
-          try {
-            host = new URL(r.url).hostname;
-          } catch {
-            host = "";
-          }
+          const host = (() => {
+            try {
+              return new URL(r.url).hostname;
+            } catch {
+              return "";
+            }
+          })();
           const faviconUrl = host
             ? `https://www.google.com/s2/favicons?sz=32&domain=${encodeURIComponent(host)}`
             : "";
@@ -771,14 +766,13 @@ class UltralyticsChat {
       const decoder = new TextDecoder();
       let content = "";
       let renderTimer = null;
-      const renderDelay = 30;
       const scheduleRender = () => {
         if (renderTimer) return;
         renderTimer = setTimeout(() => {
           div.innerHTML = this.renderMarkdown(content);
           this.scrollToBottom();
           renderTimer = null;
-        }, renderDelay);
+        }, 30);
       };
       while (true) {
         const { done, value } = await reader.read();
@@ -838,7 +832,7 @@ class UltralyticsChat {
       "ult-message-label",
       role === "assistant"
         ? `<img src="${this.escapeHtml(logomark)}" alt="${this.escapeHtml(name)}" /><span>${this.escapeHtml(name)}</span>`
-        : `<span class="ult-user-icon"><svg width="29" height="29" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></span><span>You</span>`,
+        : `<span class="ult-user-icon"><svg width="29" height="29" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></span><span>You</span>`,
     );
     group.appendChild(label);
     this.refs.messages.appendChild(group);
@@ -911,7 +905,6 @@ class UltralyticsChat {
         if (inCode) {
           html += `</code></pre>`;
           inCode = false;
-          codeLang = "";
         } else {
           closePara();
           closeList();
@@ -1004,20 +997,23 @@ class UltralyticsChat {
       return `@@ULTCODE${codeBlocks.length - 1}@@`;
     });
     text = text.replace(
-      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+      /\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/g,
+      (_, label, url) =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`,
     );
     text = text.replace(
-      /(?<!href=")(?<!src=")(?<!>)\b(https?:\/\/[^\s<>'")\]]+?)(?=[.,;:!?]*(?:\s|<|'|"|\)|\]|$))/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>',
+      /(?<!href=")(?<!src=")(?<!>)\b(https?:\/\/[^\s<>'")\]]+?)(?=[.,;:!?]*(?:\s|<|'|"|\)|]|$))/g,
+      (url) =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`,
     );
     text = text.replace(/\*\*([^"]+?)\*\*/g, "<strong>$1</strong>");
     text = text.replace(/__([^"]+?)__/g, "<strong>$1</strong>");
     text = text.replace(/(?<!\*)\*(?!\*)([^"]+?)\*(?!\*)/g, "<em>$1</em>");
     text = text.replace(/(?<!_)_(?!_)([^"]+?)_(?!_)/g, "<em>$1</em>");
-    text = text.replace(/@@ULTCODE(\d+)@@/g, (match, idx) => {
-      return `<code>${codeBlocks[idx]}</code>`;
-    });
+    text = text.replace(
+      /@@ULTCODE(\d+)@@/g,
+      (match, idx) => `<code>${codeBlocks[idx]}</code>`,
+    );
     return text.replace(/ {2}\n/g, "<br>");
   }
 }
