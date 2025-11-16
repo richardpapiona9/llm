@@ -74,6 +74,11 @@ class UltralyticsChat {
   qs = (sel, root = document) => root.querySelector(sel);
   qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
   esc = (s) => this.escapeHtml(s);
+  getGroupIndex(group) {
+    if (!group) return null;
+    const idx = Number.parseInt(group.dataset?.messageIndex ?? "", 10);
+    return Number.isNaN(idx) ? null : idx;
+  }
 
   on(el, ev, fn) {
     if (!el) return;
@@ -90,13 +95,33 @@ class UltralyticsChat {
 
   showCopySuccess(btn) {
     if (!btn) return;
-    const orig = btn.innerHTML;
+    if (btn.__successTimeout) clearTimeout(btn.__successTimeout);
+    if (!btn.dataset.successOriginal) btn.dataset.successOriginal = btn.innerHTML;
     btn.innerHTML = this.icon("check");
     btn.classList.add("success");
-    setTimeout(() => {
-      btn.innerHTML = orig;
+    btn.__successTimeout = setTimeout(() => {
+      if (btn.dataset.successOriginal) {
+        btn.innerHTML = btn.dataset.successOriginal;
+        delete btn.dataset.successOriginal;
+      }
       btn.classList.remove("success");
+      btn.__successTimeout = null;
     }, 1500);
+  }
+
+  flashTooltip(target, message) {
+    const tip = this.refs.tooltip;
+    if (!target || !tip) return;
+    const rect = target.getBoundingClientRect();
+    tip.textContent = message;
+    tip.style.left = rect.left + rect.width / 2 + "px";
+    tip.style.top = rect.top - 8 + "px";
+    tip.classList.add("show");
+    if (tip.__timer) clearTimeout(tip.__timer);
+    tip.__timer = setTimeout(() => {
+      tip.classList.remove("show");
+      tip.__timer = null;
+    }, 1600);
   }
 
   getPageContext() {
@@ -269,7 +294,7 @@ class UltralyticsChat {
       html[data-theme=dark] .ult-example{background:#131318;color:#fafafa}
 
       .ult-chat-messages{flex:1;overflow-y:auto;padding:0 18px 18px;display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
-      .ult-message-group{padding:8px 8px 4px;margin:-8px -8px 0;border-radius:10px;transition:background .15s ease,border .15s ease;border:1px solid transparent}
+      .ult-message-group{padding:8px 8px 4px;margin:-8px -8px 0;border-radius:10px;transition:background .15s ease,border .15s ease;border:1px solid transparent;position:relative}
       .ult-message-group:first-child{margin-top:0}
       .ult-message-group:hover{background:rgba(247,247,249,.4);border-color:rgba(229,231,235,.6)}
       html[data-theme=dark] .ult-message-group:hover{background:rgba(19,19,24,.4);border-color:rgba(35,35,39,.6)}
@@ -281,6 +306,8 @@ class UltralyticsChat {
       .ult-message{font-size:14px;line-height:1.6;color:var(--ult-text);padding:0 2px;word-break:break-word;text-align:left}
       html[data-theme=dark] .ult-message{color:#f5f5f5}
       .ult-message-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;margin-top:6px;padding-left:2px}
+      .ult-user-message-actions{position:absolute;right:2px;bottom:0;opacity:0;transition:opacity .15s;pointer-events:none}
+      .ult-message-group:hover .ult-user-message-actions,.ult-message-group:focus-within .ult-user-message-actions{opacity:1;pointer-events:auto}
       .ult-message a{color:var(--ult-primary);text-underline-offset:2px}.ult-message a:hover{text-decoration:underline}
       .ult-message strong{font-weight:700;color:var(--ult-text)}
       html[data-theme=dark] .ult-message strong{color:#fafafa}
@@ -326,8 +353,12 @@ class UltralyticsChat {
       .ult-chat-send:hover{transform:translateY(-1px);color:var(--ult-text);background:#f7f7f9}
       html[data-theme=dark] .ult-chat-send{color:#a1a1aa}
       html[data-theme=dark] .ult-chat-send:hover{color:#fafafa;background:#17181d}
-      .ult-chat-input{flex:1;padding:10px 12px;border:0;border-radius:12px;font-size:14px;resize:none;max-height:140px;background:#f7f7f9;color:#0b0b0f;outline:0}
-      .ult-chat-input::placeholder{color:#9ca3af} html[data-theme=dark] .ult-chat-input{background:#131318;color:#fafafa}
+      .ult-chat-input{flex:1;border:0;font-size:14px;resize:none;max-height:140px;background:#f7f7f9;color:#0b0b0f;border-radius:12px;padding:10px 12px;outline:0}
+      .ult-chat-input::placeholder{color:#9ca3af}
+      html[data-theme=dark] .ult-chat-input{background:#131318;color:#fafafa}
+      .ult-message[contenteditable]{cursor:text;outline:0;background:transparent;padding:0 2px;border:1px solid transparent;border-radius:0;transition:background .15s ease,border-color .15s ease}
+      .ult-message-editing{background:#f7f7f9;color:#0b0b0f;border-radius:12px;padding:10px 12px;margin:6px 0;border:1px solid #eceff5;font-size:14px;line-height:1.45;min-height:42px;max-height:140px;overflow:auto}
+      html[data-theme=dark] .ult-message-editing{background:#131318;color:#fafafa;border-color:#1c1c22}
 
       .ult-chat-footer{padding:8px 18px;text-align:left;font-size:11px;color:#9ca3af}
       html[data-theme=dark] .ult-chat-footer{color:#71717a}
@@ -369,9 +400,11 @@ class UltralyticsChat {
         .ult-chat-input-container{padding:8px 14px 10px;flex:0 0 auto;gap:8px;border-top:1px solid #eceff5;background:#fff}
         .ult-chat-modal.welcome-mode .ult-chat-input-container{margin-top:auto}
         html[data-theme=dark] .ult-chat-input-container{border-top-color:#1c1c22;background:#0a0a0b}
-        .ult-chat-input{padding:9px 11px;font-size:16px;max-height:100px;border-radius:10px}
+        .ult-chat-input{padding:9px 11px;font-size:16px;border-radius:10px;max-height:100px}
+        .ult-message-editing{padding:9px 11px;font-size:16px;border-radius:10px;max-height:100px}
         .ult-chat-footer{padding:6px 14px;font-size:10px}
-        .ult-message-group{gap:3px;padding:0 14px;margin:0 0 8px}
+        .ult-message-group{gap:3px;padding:0 14px;margin:0 0 8px;position:relative}
+        .ult-user-message-actions{right:0;bottom:0}
         .ult-message-label{font-size:11px;gap:5px;padding:0;margin-bottom:2px}
         .ult-message-label img{max-height:20px;max-width:20px}
         .ult-message-label svg{width:20px;height:20px}
@@ -525,7 +558,7 @@ class UltralyticsChat {
           .then(() => this.showCopySuccess(btn))
           .catch(console.error);
       }
-      const actionBtn = e.target.closest(".ult-icon-btn[data-action]");
+      const actionBtn = e.target.closest("[data-action]");
       if (actionBtn) {
         const action = actionBtn.dataset.action;
         const group = actionBtn.closest(".ult-message-group");
@@ -545,8 +578,61 @@ class UltralyticsChat {
           this.showCopySuccess(actionBtn);
         } else if (action === "retry") {
           void this.retryLast();
+        } else if (action === "edit") {
+          const messageDiv = group.querySelector(".ult-message");
+          const idx = this.getGroupIndex(group);
+          if (messageDiv && idx !== null) {
+            const newContent = messageDiv.textContent.trim();
+            if (!newContent) return;
+            if (this.isStreaming) {
+              this.flashTooltip(actionBtn, "Finish generating first");
+              return;
+            }
+            if (newContent.length > this.config.maxMessageLength) {
+              this.flashTooltip(actionBtn, `Too long (max ${this.config.maxMessageLength})`);
+              return;
+            }
+            void this.editAndRestart(idx, newContent).then((ok) => {
+              if (ok) this.showCopySuccess(actionBtn);
+            });
+          }
         }
       }
+    });
+
+    this.on(this.refs.messages, "keydown", (e) => {
+      const messageDiv = e.target.closest(".ult-message[contenteditable='true']");
+      if (!messageDiv) return;
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const group = messageDiv.closest(".ult-message-group");
+        const idx = this.getGroupIndex(group);
+        if (idx !== null) {
+          if (this.isStreaming) {
+            this.flashTooltip(messageDiv, "Finish generating first");
+            return;
+          }
+          const newContent = messageDiv.textContent.trim();
+          if (!newContent) return;
+          if (newContent.length > this.config.maxMessageLength) {
+            this.flashTooltip(messageDiv, `Too long (max ${this.config.maxMessageLength})`);
+            return;
+          }
+          void this.editAndRestart(idx, newContent);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        messageDiv.textContent = messageDiv.dataset.originalContent || "";
+        messageDiv.blur();
+      }
+    });
+    this.on(this.refs.messages, "focusin", (e) => {
+      const messageDiv = e.target.closest(".ult-message[contenteditable='true']");
+      if (messageDiv) messageDiv.classList.add("ult-message-editing");
+    });
+    this.on(this.refs.messages, "focusout", (e) => {
+      const messageDiv = e.target.closest(".ult-message[contenteditable='true']");
+      if (messageDiv) messageDiv.classList.remove("ult-message-editing");
     });
   }
 
@@ -615,7 +701,7 @@ class UltralyticsChat {
     this.showWelcome(false);
     const prevAutoScroll = this.autoScroll;
     this.autoScroll = false;
-    this.messages.forEach((m) => this.addMessageToUI(m.role, m.content));
+    this.messages.forEach((m, i) => this.addMessageToUI(m.role, m.content, i));
     this.autoScroll = prevAutoScroll;
     this.refs.messages.scrollTop = this.refs.messages.scrollHeight;
   }
@@ -678,12 +764,28 @@ class UltralyticsChat {
     const actualIdx = this.messages.length - 1 - lastAssistantIdx;
     const lastUserMsg = this.messages[actualIdx - 1];
     if (!lastUserMsg || lastUserMsg.role !== "user") return;
-    this.messages.splice(actualIdx, 1);
+    void this.editAndRestart(actualIdx - 1, lastUserMsg.content);
+  }
+
+  async editAndRestart(messageIndex, newContent) {
+    if (this.isStreaming) return false;
+    if (!Number.isInteger(messageIndex) || messageIndex < 0 || messageIndex >= this.messages.length) return false;
+    const message = this.messages[messageIndex];
+    if (message.role !== "user") return false;
+    if (newContent.length > this.config.maxMessageLength) return false;
+    message.content = newContent;
+    this.messages = this.messages.slice(0, messageIndex + 1);
+    const currentGroup = this.qs(`.ult-message-group[data-message-index="${messageIndex}"]`, this.refs.messages);
+    const currentMessage = currentGroup?.querySelector(".ult-message");
+    if (currentMessage) currentMessage.dataset.originalContent = newContent;
     const groups = this.qsa(".ult-message-group", this.refs.messages);
-    const lastAssistantGroup = [...groups].reverse().find((g) => g.querySelector(".ult-message.assistant"));
-    if (lastAssistantGroup) lastAssistantGroup.remove();
+    groups.forEach((g) => {
+      const idx = this.getGroupIndex(g);
+      if (idx === null || idx > messageIndex) g.remove();
+    });
     if (this.refs.tooltip) this.refs.tooltip.classList.remove("show");
-    void this.sendMessage(lastUserMsg.content, true);
+    await this.sendMessage(newContent, false, messageIndex);
+    return true;
   }
 
   downloadThread() {
@@ -782,7 +884,7 @@ class UltralyticsChat {
     }
   }
 
-  async sendMessage(text, isRetry = false) {
+  async sendMessage(text, isNew = true, editIndex = null) {
     if (!text || this.isStreaming || !this.refs.input || !this.refs.messages) return;
     this.showWelcome(false);
     this.autoScroll = true;
@@ -794,28 +896,35 @@ class UltralyticsChat {
       this.refs.input.focus();
       return;
     }
-    if (!isRetry) {
+    if (isNew) {
       this.messages.push({ role: "user", content: text });
-      this.addMessageToUI("user", text);
+      this.addMessageToUI("user", text, this.messages.length - 1);
     }
     this.refs.input.value = "";
     this.refs.input.style.height = "auto";
     this.isStreaming = true;
     this.updateComposerState();
-    const group = this.createMessageGroup("assistant");
+    this.qsa(".ult-message[contenteditable='true']", this.refs.messages).forEach(
+      (el) => (el.contentEditable = "false"),
+    );
+    const group = this.createMessageGroup("assistant", this.messages.length);
     const { el: thinking, clear } = this.createThinking();
     group.appendChild(thinking);
     this.scrollToBottom();
     this.abortController = new AbortController();
+    const safeEditIndex =
+      Number.isInteger(editIndex) && editIndex >= 0 && editIndex < this.messages.length ? editIndex : null;
     try {
+      const body = {
+        messages: [{ role: "user", content: text }],
+        session_id: this.sessionId,
+        context: this.getPageContext(),
+      };
+      if (safeEditIndex !== null) body.edit_index = safeEditIndex;
       const res = await fetch(this.apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: text }],
-          session_id: this.sessionId,
-          context: this.getPageContext(),
-        }),
+        body: JSON.stringify(body),
         signal: this.abortController.signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -880,15 +989,17 @@ class UltralyticsChat {
       this.isStreaming = false;
       this.abortController = null;
       this.updateComposerState();
+      this.qsa(".ult-message[contenteditable]", this.refs.messages).forEach((el) => (el.contentEditable = "true"));
       this.refs.input?.focus();
     }
   }
 
-  createMessageGroup(role) {
+  createMessageGroup(role, messageIndex = null) {
     if (!this.refs.messages) return null;
     const { name, logomark } = this.config.branding;
     const group = this.el("div", "ult-message-group");
     group.dataset.role = role;
+    if (messageIndex !== null) group.dataset.messageIndex = messageIndex;
     const label = this.el(
       "div",
       "ult-message-label",
@@ -902,12 +1013,21 @@ class UltralyticsChat {
     return group;
   }
 
-  addMessageToUI(role, content) {
-    const group = this.createMessageGroup(role);
+  addMessageToUI(role, content, messageIndex = null) {
+    const group = this.createMessageGroup(role, messageIndex);
     if (!group) return null;
     const div = this.el("div", `ult-message ${role === "assistant" ? "assistant" : ""}`, this.renderMarkdown(content));
+    if (role === "user") {
+      div.contentEditable = "true";
+      div.dataset.originalContent = content;
+      div.setAttribute("role", "textbox");
+      div.setAttribute("aria-label", "Edit your message");
+      div.setAttribute("aria-multiline", "true");
+      if (this.isStreaming) div.contentEditable = "false";
+    }
     group.appendChild(div);
     if (role === "assistant") this.finalizeAssistantMessage(group);
+    else this.addUserMessageActions(group);
     return div;
   }
 
@@ -917,6 +1037,16 @@ class UltralyticsChat {
       "div",
       "ult-message-actions",
       `<button class="ult-icon-btn" data-action="copy" aria-label="Copy response" data-tooltip="Copy response">${this.icon("copy")}</button><button class="ult-icon-btn" data-action="like" aria-label="Good response" data-tooltip="Good response">${this.icon("like")}</button><button class="ult-icon-btn" data-action="dislike" aria-label="Bad response" data-tooltip="Bad response">${this.icon("dislike")}</button><button class="ult-icon-btn" data-action="retry" aria-label="Try again" data-tooltip="Try again">${this.icon("refresh")}</button>`,
+    );
+    group.appendChild(actions);
+  }
+
+  addUserMessageActions(group) {
+    if (group.querySelector(".ult-user-message-actions")) return;
+    const actions = this.el(
+      "div",
+      "ult-user-message-actions",
+      `<button class="ult-chat-send ult-chat-edit-btn" data-action="edit" aria-label="Edit and restart" data-tooltip="Edit and restart"><span class="ult-icon-swap" data-icon="arrowUp">${this.icon("arrowUp")}</span></button>`,
     );
     group.appendChild(actions);
   }
