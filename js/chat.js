@@ -56,6 +56,15 @@ class UltralyticsChat {
       },
     };
     this.apiUrl = this.config.apiUrl;
+    this.feedbackUrl = d(
+      config,
+      "feedbackUrl",
+      (() => {
+        if (this.apiUrl.endsWith("/chat")) return this.apiUrl.replace(/\/chat$/, "/feedback");
+        const trimmed = this.apiUrl.replace(/\/$/, "");
+        return `${trimmed}/feedback`;
+      })(),
+    );
     this.messages = [];
     this.isOpen = false;
     this.isStreaming = false;
@@ -764,8 +773,30 @@ class UltralyticsChat {
     this.showCopySuccess(this.qs(".ult-chat-copy", this.refs.modal));
   }
 
-  feedback(type) {
-    console.log("feedback:", type);
+  async feedback(type) {
+    const vote = type === "up";
+    const userCount = this.messages.filter((m) => m.role === "user").length;
+    if (!userCount) {
+      console.warn("feedback ignored: no user messages yet");
+      return;
+    }
+    const queryIndex = userCount - 1;
+    try {
+      const response = await fetch(this.feedbackUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: this.sessionId,
+          query_index: queryIndex,
+          vote,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`feedback failed with status ${response.status}`);
+      }
+    } catch (err) {
+      console.warn("feedback failed", err);
+    }
   }
 
   retryLast() {
