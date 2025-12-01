@@ -1302,3 +1302,8 @@ class UltralyticsChat {
     return text.replace(/ {2}\n/g, "<br>");
   }
 }
+
+// Export to globalThis for compatibility with module bundlers and various JS environments
+if (typeof globalThis !== "undefined" && !globalThis.UltralyticsChat) {
+  globalThis.UltralyticsChat = UltralyticsChat;
+}
